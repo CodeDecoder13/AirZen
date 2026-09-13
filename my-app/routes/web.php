@@ -16,6 +16,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 
 Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
     Route::get('readings/latest', [SensorReadingController::class, 'latest'])->name('readings.latest');
+    Route::get('readings/history', [SensorReadingController::class, 'history'])->name('readings.history');
 });
 
 // Literal path and query param names are hardcoded into the already-flashed

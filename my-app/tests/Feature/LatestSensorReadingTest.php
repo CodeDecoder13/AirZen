@@ -29,7 +29,7 @@ class LatestSensorReadingTest extends TestCase
         SensorReading::factory()->create(['type' => 'HUMIDITY', 'value' => 55.0]);
         SensorReading::factory()->create(['type' => 'NITROGEN', 'value' => 40.0]);
         SensorReading::factory()->create(['type' => 'C0', 'value' => 4.5]);
-        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 25.45, 'created_at' => now()]);
+        $latest = SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 25.45, 'created_at' => now()]);
 
         $response = $this->actingAs($user)->getJson('/api/readings/latest');
 
@@ -41,6 +41,7 @@ class LatestSensorReadingTest extends TestCase
             ->assertJsonPath('readings.particulate_matter', 25.45)
             ->assertJsonPath('status', 'Normal')
             ->assertJsonPath('color', '#EAB308')
+            ->assertJsonPath('updated_at', $latest->created_at->toIso8601String())
             ->assertJsonCount(3, 'recommendations');
 
         $aqi = $response->json('aqi');
@@ -57,6 +58,7 @@ class LatestSensorReadingTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('readings.temperature', null)
             ->assertJsonPath('readings.particulate_matter', null)
+            ->assertJsonPath('updated_at', null)
             ->assertJsonPath('aqi', 0)
             ->assertJsonPath('status', 'Good');
     }

@@ -20,6 +20,7 @@ final class LatestReadingSnapshot
      *     status: string,
      *     color: string,
      *     recommendations: list<string>,
+     *     updated_at: ?string,
      * }
      */
     public function get(): array
@@ -41,6 +42,7 @@ final class LatestReadingSnapshot
             'status' => $recommendation['status'],
             'color' => $recommendation['color'],
             'recommendations' => $recommendation['recommendations'],
+            'updated_at' => SensorReading::latest()->first()?->created_at?->toIso8601String(),
         ];
     }
 
