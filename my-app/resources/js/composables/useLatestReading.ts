@@ -1,32 +1,23 @@
 import { onMounted, onUnmounted, ref, type Ref } from 'vue';
 
-export interface Reading {
-    id: number;
-    temperature: number;
-    humidity: number;
-    co: number;
-    nitrogen: number;
-    pm25: number;
-    aqi: number;
-    status: string;
-    color: string;
-    device_id: string | null;
-    created_at: string;
+export interface SensorReadings {
+    temperature: number | null;
+    humidity: number | null;
+    nitrogen: number | null;
+    co: number | null;
+    particulate_matter: number | null;
 }
 
-export interface Recommendation {
+export interface ReadingSnapshot {
+    readings: SensorReadings;
+    aqi: number;
     status: string;
     color: string;
     recommendations: string[];
 }
 
-export function useLatestReading(
-    initialReading: Reading | null,
-    initialRecommendation: Recommendation | null,
-    intervalMs = 8000,
-): { reading: Ref<Reading | null>; recommendation: Ref<Recommendation | null> } {
-    const reading = ref<Reading | null>(initialReading);
-    const recommendation = ref<Recommendation | null>(initialRecommendation);
+export function useLatestReading(initialSnapshot: ReadingSnapshot, intervalMs = 8000): { snapshot: Ref<ReadingSnapshot> } {
+    const snapshot = ref<ReadingSnapshot>(initialSnapshot) as Ref<ReadingSnapshot>;
     let timer: ReturnType<typeof setInterval> | undefined;
 
     async function poll(): Promise<void> {
@@ -39,11 +30,9 @@ export function useLatestReading(
                 return;
             }
 
-            const body = await response.json();
-            reading.value = body.reading;
-            recommendation.value = body.recommendation;
+            snapshot.value = await response.json();
         } catch {
-            // network hiccup - keep showing the last known reading, try again next tick
+            // network hiccup - keep showing the last known snapshot, try again next tick
         }
     }
 
@@ -55,5 +44,5 @@ export function useLatestReading(
         if (timer) clearInterval(timer);
     });
 
-    return { reading, recommendation };
+    return { snapshot };
 }

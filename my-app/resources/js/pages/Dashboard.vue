@@ -1,26 +1,31 @@
 <script setup lang="ts">
 import AqiGauge from '@/components/AqiGauge.vue';
-import { useLatestReading, type Reading, type Recommendation } from '@/composables/useLatestReading';
+import { useLatestReading, type ReadingSnapshot } from '@/composables/useLatestReading';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps<{
-    initialReading: Reading | null;
-    initialRecommendation: Recommendation | null;
+    initialSnapshot: ReadingSnapshot;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Dashboard', href: '/dashboard' }];
 
-const { reading, recommendation } = useLatestReading(props.initialReading, props.initialRecommendation);
+const { snapshot } = useLatestReading(props.initialSnapshot);
+
+const hasAnyReading = computed(() => Object.values(snapshot.value.readings).some((value) => value !== null));
+
+function formatValue(value: number | null, suffix: string, decimals = 1): string {
+    return value === null ? '--' : `${value.toFixed(decimals)}${suffix}`;
+}
 
 const sensorStrip = computed(() => [
-    { label: 'Temperature', value: reading.value ? `${reading.value.temperature.toFixed(1)} °C` : '--' },
-    { label: 'Humidity', value: reading.value ? `${reading.value.humidity.toFixed(1)} %` : '--' },
-    { label: 'CO', value: reading.value ? `${reading.value.co.toFixed(2)} ppm` : '--' },
-    { label: 'NOx', value: reading.value ? `${reading.value.nitrogen.toFixed(1)}` : '--' },
-    { label: 'PM2.5', value: reading.value ? `${reading.value.pm25.toFixed(1)} µg/m³` : '--' },
+    { label: 'Temperature', value: formatValue(snapshot.value.readings.temperature, ' °C') },
+    { label: 'Humidity', value: formatValue(snapshot.value.readings.humidity, ' %') },
+    { label: 'Nitrogen', value: formatValue(snapshot.value.readings.nitrogen, '') },
+    { label: 'C0', value: formatValue(snapshot.value.readings.co, ' ppm', 2) },
+    { label: 'PM2.5', value: formatValue(snapshot.value.readings.particulate_matter, ' µg/m³') },
 ]);
 </script>
 
@@ -33,14 +38,10 @@ const sensorStrip = computed(() => [
                 <div
                     class="flex flex-col items-center gap-4 rounded-[22px] bg-airzen-card p-8 shadow-[0_1px_2px_rgba(14,36,25,0.04),0_16px_32px_-20px_rgba(14,36,25,0.12)]"
                 >
-                    <AqiGauge v-if="reading" :aqi="reading.aqi" :color="reading.color" />
+                    <AqiGauge v-if="hasAnyReading" :aqi="snapshot.aqi" :color="snapshot.color" />
                     <p v-else class="text-sm text-airzen-muted">Waiting for the first sensor reading&hellip;</p>
-                    <div
-                        v-if="recommendation"
-                        class="rounded-full px-4 py-1 text-sm font-medium"
-                        :style="{ backgroundColor: recommendation.color + '22', color: recommendation.color }"
-                    >
-                        {{ recommendation.status }}
+                    <div class="rounded-full px-4 py-1 text-sm font-medium" :style="{ backgroundColor: snapshot.color + '22', color: snapshot.color }">
+                        {{ snapshot.status }}
                     </div>
                 </div>
 
@@ -48,10 +49,10 @@ const sensorStrip = computed(() => [
                     <h2 class="mb-4 font-heading text-lg font-semibold">Recommendations</h2>
                     <ul class="flex flex-col gap-3">
                         <li
-                            v-for="(item, index) in recommendation?.recommendations ?? []"
+                            v-for="(item, index) in snapshot.recommendations"
                             :key="index"
                             class="border-l-4 pl-3 text-sm text-airzen-muted"
-                            :style="{ borderColor: recommendation?.color }"
+                            :style="{ borderColor: snapshot.color }"
                         >
                             {{ item }}
                         </li>

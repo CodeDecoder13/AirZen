@@ -35,8 +35,4 @@ return [
         ],
     ],
 
-    'device' => [
-        'key' => env('DEVICE_API_KEY'),
-    ],
-
 ];
