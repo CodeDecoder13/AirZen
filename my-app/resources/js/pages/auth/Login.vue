@@ -28,14 +28,18 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="Log in to your account" description="Enter your email and password below to log in">
+    <AuthBase title="Log in to AirZen" description="Access the dashboard and reading history.">
         <Head title="Log in" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
         </div>
 
-        <form @submit.prevent="submit" class="flex flex-col gap-6">
+        <form
+            @submit.prevent="submit"
+            class="flex flex-col gap-6 rounded-[22px] bg-airzen-card p-8 text-[#14251c] shadow-[0_30px_60px_-20px_rgba(14,36,25,0.3)]"
+            style="--foreground: 0 0% 3.9%"
+        >
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="email">Email address</Label>
@@ -48,6 +52,7 @@ const submit = () => {
                         autocomplete="email"
                         v-model="form.email"
                         placeholder="email@example.com"
+                        class="rounded-[10px] border-transparent bg-[#EEF8F1] focus-visible:border-airzen-green focus-visible:ring-airzen-green"
                     />
                     <InputError :message="form.errors.email" />
                 </div>
@@ -65,6 +70,7 @@ const submit = () => {
                         autocomplete="current-password"
                         v-model="form.password"
                         placeholder="Password"
+                        class="rounded-[10px] border-transparent bg-[#EEF8F1] focus-visible:border-airzen-green focus-visible:ring-airzen-green"
                     />
                     <InputError :message="form.errors.password" />
                 </div>
@@ -76,13 +82,13 @@ const submit = () => {
                     </Label>
                 </div>
 
-                <Button type="submit" class="mt-4 w-full" tabindex="4" :disabled="form.processing">
+                <Button type="submit" class="mt-4 w-full bg-airzen-green hover:bg-airzen-green-dark" tabindex="4" :disabled="form.processing">
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
-                    Log in
+                    Sign in
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-muted-foreground">
+            <div class="text-center text-sm text-airzen-muted">
                 Don't have an account?
                 <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
             </div>
