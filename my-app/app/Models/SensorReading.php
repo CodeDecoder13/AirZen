@@ -17,6 +17,8 @@ final class SensorReading extends Model
     public const HUMIDITY = 'HUMIDITY';
     public const NITROGEN = 'NITROGEN';
     public const C0 = 'C0';
+    // CO2 is always 0 on the device right now - stored for completeness but not
+    // used anywhere (not in AqiCalculator, not on the dashboard).
     public const CO2 = 'CO2';
     public const PARTICULATE_MATTER = 'ParticulateMatter';
 
