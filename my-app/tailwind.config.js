@@ -13,6 +13,7 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Instrument Sans', ...defaultTheme.fontFamily.sans],
+                heading: ['Space Grotesk', ...defaultTheme.fontFamily.sans],
             },
             borderRadius: {
                 lg: 'var(--radius)',
@@ -69,6 +70,19 @@ export default {
                     'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
                     border: 'hsl(var(--sidebar-border))',
                     ring: 'hsl(var(--sidebar-ring))',
+                },
+                airzen: {
+                    bg: '#F4FAF6',
+                    card: '#FFFFFF',
+                    green: '#12A454',
+                    'green-dark': '#0B7A3F',
+                    'green-light': '#E4F7EC',
+                    muted: '#5C7A67',
+                    good: '#22C55E',
+                    normal: '#EAB308',
+                    sensitive: '#F59E0B',
+                    unhealthy: '#EF4444',
+                    'very-unhealthy': '#A855F7',
                 },
             },
         },
