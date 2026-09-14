@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import HeroScene from '@/components/HeroScene.vue';
+import PhoneShowcase from '@/components/PhoneShowcase.vue';
 import { Head, Link } from '@inertiajs/vue3';
 </script>
 
@@ -10,7 +10,7 @@ import { Head, Link } from '@inertiajs/vue3';
     </Head>
 
     <div class="min-h-screen bg-airzen-bg font-sans text-[#1b1b18]">
-        <header class="mx-auto flex w-full max-w-5xl items-center justify-between p-6 text-sm">
+        <header class="mx-auto flex w-full max-w-6xl items-center justify-between p-6 text-sm">
             <div class="font-heading text-lg font-semibold text-airzen-green-dark">AirZen</div>
             <nav class="flex items-center gap-4">
                 <Link
@@ -34,14 +34,13 @@ import { Head, Link } from '@inertiajs/vue3';
             </nav>
         </header>
 
-        <main class="mx-auto grid w-full max-w-5xl gap-10 px-6 pb-20 pt-6 md:grid-cols-2 md:items-center">
-            <div>
+        <main class="mx-auto w-full max-w-6xl px-6 pb-20 pt-6">
+            <div class="mx-auto max-w-xl text-center">
                 <h1 class="font-heading text-4xl font-bold leading-tight text-[#0B2A18] md:text-5xl">Know your air, in real time.</h1>
-                <p class="mt-4 text-base text-airzen-muted">
-                    AirZen turns a low-cost ESP32 sensor node into a live indoor air quality monitor &mdash; tracking temperature, humidity, CO, NOx,
-                    and PM2.5, then translating every reading into an EPA-standard AQI score and a plain-language recommendation for the room.
+                <p class="mx-auto mt-4 max-w-[46ch] text-base text-airzen-muted">
+                    Real-time indoor air quality from a low-cost ESP32 sensor, turned into a clear AQI score and simple recommendations.
                 </p>
-                <div class="mt-8 flex gap-3">
+                <div class="mt-8 flex justify-center gap-3">
                     <Link
                         v-if="$page.props.auth.user"
                         :href="route('dashboard')"
@@ -66,7 +65,9 @@ import { Head, Link } from '@inertiajs/vue3';
                 </div>
             </div>
 
-            <HeroScene />
+            <div class="mt-14">
+                <PhoneShowcase />
+            </div>
         </main>
     </div>
 </template>
