@@ -81,4 +81,56 @@ class AqiHistoryServiceTest extends TestCase
         // Average PM2.5 = 15.4 -> top of the first breakpoint bracket -> AQI 50.
         $this->assertSame(50.0, $weekly[6]['average_aqi']);
     }
+
+    public function test_weekly_average_aqi_is_the_same_as_daily_averages_for_seven_days()
+    {
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 10.0, 'created_at' => now()]);
+
+        $this->assertSame($this->service->dailyAverages(7), $this->service->weeklyAverageAqi());
+    }
+
+    public function test_daily_averages_supports_a_longer_range()
+    {
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 10.0, 'created_at' => now()->subDays(20)]);
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 12.0, 'created_at' => now()]);
+
+        $thirty = $this->service->dailyAverages(30);
+
+        $this->assertCount(30, $thirty);
+        $this->assertNotNull($thirty[9]['average_aqi']); // 20 days ago is index (30-1)-20 = 9
+        $this->assertNotNull($thirty[29]['average_aqi']); // today
+    }
+
+    public function test_band_distribution_counts_days_by_status()
+    {
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 5.0, 'created_at' => now()->subDay()]); // Good
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 25.0, 'created_at' => now()]); // Normal
+
+        $distribution = $this->service->bandDistribution(7);
+
+        $this->assertSame(1, $distribution['Good']);
+        $this->assertSame(1, $distribution['Normal']);
+        $this->assertArrayNotHasKey('Very Unhealthy', $distribution);
+    }
+
+    public function test_paginated_readings_filters_by_type()
+    {
+        SensorReading::factory()->create(['type' => 'TEMPERATURE', 'value' => 25.0]);
+        SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 10.0]);
+
+        $page = $this->service->paginatedReadings(['type' => 'TEMPERATURE'], 20);
+
+        $this->assertSame(1, $page->total());
+        $this->assertSame('TEMPERATURE', $page->items()[0]->type);
+    }
+
+    public function test_paginated_readings_filters_by_date_range()
+    {
+        SensorReading::factory()->create(['type' => 'TEMPERATURE', 'value' => 20.0, 'created_at' => now()->subDays(10)]);
+        SensorReading::factory()->create(['type' => 'TEMPERATURE', 'value' => 22.0, 'created_at' => now()]);
+
+        $page = $this->service->paginatedReadings(['from' => now()->subDay()->toDateString()], 20);
+
+        $this->assertSame(1, $page->total());
+    }
 }
