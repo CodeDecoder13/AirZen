@@ -18,10 +18,6 @@ const sidebarNavItems: NavItem[] = [
         title: 'Appearance',
         href: '/settings/appearance',
     },
-    {
-        title: 'Notifications',
-        href: '/settings/notifications',
-    },
 ];
 
 const currentPath = window.location.pathname;

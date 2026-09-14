@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Mail\MorningAirQualityDigest;
-use App\Models\User;
+use App\Models\DigestRecipient;
 use App\Services\MorningDigestService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -14,7 +14,7 @@ final class SendMorningDigest extends Command
 {
     protected $signature = 'digest:send-morning';
 
-    protected $description = 'Email the daily morning air quality digest to users who have opted in';
+    protected $description = 'Email the daily morning air quality digest to every configured recipient';
 
     public function __construct(
         private readonly MorningDigestService $digestService,
@@ -32,19 +32,19 @@ final class SendMorningDigest extends Command
             return self::SUCCESS;
         }
 
-        $recipients = User::where('daily_digest_enabled', true)->get();
+        $recipients = DigestRecipient::all();
 
         if ($recipients->isEmpty()) {
-            $this->info('No users are opted in to the morning digest.');
+            $this->info('No digest recipients configured.');
 
             return self::SUCCESS;
         }
 
         foreach ($recipients as $recipient) {
-            Mail::to($recipient)->send(new MorningAirQualityDigest($digest));
+            Mail::to($recipient->email)->send(new MorningAirQualityDigest($digest));
         }
 
-        $this->info("Sent the morning digest to {$recipients->count()} user(s).");
+        $this->info("Sent the morning digest to {$recipients->count()} recipient(s).");
 
         return self::SUCCESS;
     }

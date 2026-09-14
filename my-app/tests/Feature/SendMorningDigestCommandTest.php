@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Mail\MorningAirQualityDigest;
+use App\Models\DigestRecipient;
 use App\Models\SensorReading;
-use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
@@ -13,21 +13,17 @@ class SendMorningDigestCommandTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_sends_only_to_opted_in_users_when_data_exists()
+    public function test_sends_to_every_recipient_when_data_exists()
     {
         Mail::fake();
 
-        $optedIn = User::factory()->create(['daily_digest_enabled' => true]);
-        $optedOut = User::factory()->create(['daily_digest_enabled' => false]);
+        $recipient = DigestRecipient::factory()->create();
         SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 10.0, 'created_at' => now()]);
 
         $this->artisan('digest:send-morning')->assertSuccessful();
 
-        Mail::assertQueued(MorningAirQualityDigest::class, function ($mail) use ($optedIn) {
-            return $mail->hasTo($optedIn->email);
-        });
-        Mail::assertNotQueued(MorningAirQualityDigest::class, function ($mail) use ($optedOut) {
-            return $mail->hasTo($optedOut->email);
+        Mail::assertQueued(MorningAirQualityDigest::class, function ($mail) use ($recipient) {
+            return $mail->hasTo($recipient->email);
         });
     }
 
@@ -35,18 +31,17 @@ class SendMorningDigestCommandTest extends TestCase
     {
         Mail::fake();
 
-        User::factory()->create(['daily_digest_enabled' => true]);
+        DigestRecipient::factory()->create();
 
         $this->artisan('digest:send-morning')->assertSuccessful();
 
         Mail::assertNothingOutgoing();
     }
 
-    public function test_sends_nothing_when_no_one_is_opted_in()
+    public function test_sends_nothing_when_there_are_no_recipients()
     {
         Mail::fake();
 
-        User::factory()->create(['daily_digest_enabled' => false]);
         SensorReading::factory()->create(['type' => 'ParticulateMatter', 'value' => 10.0, 'created_at' => now()]);
 
         $this->artisan('digest:send-morning')->assertSuccessful();
