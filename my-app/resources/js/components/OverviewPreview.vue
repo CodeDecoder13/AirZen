@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Droplets, Flame, Leaf, ShieldCheck, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
+import { Atom, Droplets, Flame, Leaf, ShieldCheck, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
 
 interface Metric {
     key: string;
@@ -7,6 +7,7 @@ interface Metric {
     icon: LucideIcon;
     value: string;
     unit: string;
+    wide?: boolean;
 }
 
 const metrics: Metric[] = [
@@ -14,6 +15,7 @@ const metrics: Metric[] = [
     { key: 'temperature', label: 'Temperature', icon: Thermometer, value: '24.5', unit: '°C' },
     { key: 'humidity', label: 'Humidity', icon: Droplets, value: '55', unit: '%' },
     { key: 'co', label: 'CO', icon: Flame, value: '4.5', unit: 'signal' },
+    { key: 'nitrogen', label: 'Nitrogen', icon: Atom, value: '40.0', unit: 'signal', wide: true },
 ];
 
 const recommendations = [
@@ -56,16 +58,34 @@ const recommendations = [
             </div>
 
             <div class="grid grid-cols-2 gap-3">
-                <div v-for="metric in metrics" :key="metric.key" class="flex flex-col justify-between rounded-[18px] bg-[#F7F8F1] p-3.5">
-                    <div class="flex items-center justify-between">
-                        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#2A8362]">
-                            <component :is="metric.icon" :size="14" />
-                        </span>
-                        <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-[#6B8577]">{{ metric.label }}</span>
-                    </div>
-                    <p class="az2-display mt-3 text-2xl text-[#1D352D]">
-                        {{ metric.value }}<span class="ml-0.5 text-xs font-normal text-[#6B8577]">{{ metric.unit }}</span>
-                    </p>
+                <div
+                    v-for="metric in metrics"
+                    :key="metric.key"
+                    class="rounded-[18px] bg-[#F7F8F1] p-3.5"
+                    :class="metric.wide ? 'col-span-2 flex items-center justify-between' : 'flex flex-col justify-between'"
+                >
+                    <template v-if="metric.wide">
+                        <div class="flex items-center gap-2.5">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#2A8362]">
+                                <component :is="metric.icon" :size="14" />
+                            </span>
+                            <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-[#6B8577]">{{ metric.label }}</span>
+                        </div>
+                        <p class="az2-display text-2xl text-[#1D352D]">
+                            {{ metric.value }}<span class="ml-0.5 text-xs font-normal text-[#6B8577]">{{ metric.unit }}</span>
+                        </p>
+                    </template>
+                    <template v-else>
+                        <div class="flex items-center justify-between">
+                            <span class="flex h-7 w-7 items-center justify-center rounded-full bg-white text-[#2A8362]">
+                                <component :is="metric.icon" :size="14" />
+                            </span>
+                            <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-[#6B8577]">{{ metric.label }}</span>
+                        </div>
+                        <p class="az2-display mt-3 text-2xl text-[#1D352D]">
+                            {{ metric.value }}<span class="ml-0.5 text-xs font-normal text-[#6B8577]">{{ metric.unit }}</span>
+                        </p>
+                    </template>
                 </div>
             </div>
         </div>
