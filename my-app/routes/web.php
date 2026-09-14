@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\SensorReadingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DigestRecipientController;
+use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\IotIngestController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,6 +20,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications', [DigestRecipientController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [DigestRecipientController::class, 'store'])->name('notifications.store');
     Route::delete('notifications/{digestRecipient}', [DigestRecipientController::class, 'destroy'])->name('notifications.destroy');
+
+    Route::get('history', [HistoryController::class, 'index'])->name('history.index');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
