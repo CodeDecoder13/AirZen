@@ -14,15 +14,20 @@ export interface ReadingSnapshot {
     status: string;
     color: string;
     recommendations: string[];
+    updated_at: string | null;
 }
 
-export function useLatestReading(initialSnapshot: ReadingSnapshot, intervalMs = 8000): { snapshot: Ref<ReadingSnapshot> } {
+export function useLatestReading(
+    initialSnapshot: ReadingSnapshot,
+    intervalMs = 8000,
+    endpoint = '/api/readings/latest',
+): { snapshot: Ref<ReadingSnapshot> } {
     const snapshot = ref<ReadingSnapshot>(initialSnapshot) as Ref<ReadingSnapshot>;
     let timer: ReturnType<typeof setInterval> | undefined;
 
     async function poll(): Promise<void> {
         try {
-            const response = await fetch('/api/readings/latest', {
+            const response = await fetch(endpoint, {
                 headers: { Accept: 'application/json' },
             });
 

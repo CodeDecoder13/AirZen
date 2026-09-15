@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import OverviewPreview from '@/components/OverviewPreview.vue';
+import { type ReadingSnapshot } from '@/composables/useLatestReading';
 import { Head, Link } from '@inertiajs/vue3';
 import { Leaf } from 'lucide-vue-next';
+
+defineProps<{
+    initialSnapshot: ReadingSnapshot;
+}>();
 </script>
 
 <template>
@@ -44,7 +49,7 @@ import { Leaf } from 'lucide-vue-next';
         </header>
 
         <main class="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6 sm:pb-20 sm:pt-10">
-            <OverviewPreview />
+            <OverviewPreview :initial-snapshot="initialSnapshot" />
         </main>
     </div>
 </template>

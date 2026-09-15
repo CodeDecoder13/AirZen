@@ -1,30 +1,67 @@
 <script setup lang="ts">
 import MiniSparkline from '@/components/MiniSparkline.vue';
-import { Atom, Droplets, Flame, Leaf, ShieldCheck, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
+import { useLatestReading, type ReadingSnapshot, type SensorReadings } from '@/composables/useLatestReading';
+import { formatUpdatedAt, RECOMMENDATION_ICONS, STATUS_DESCRIPTIONS, STATUS_HEADLINES } from '@/lib/airQualityCopy';
+import { Atom, Droplets, Flame, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
+import { computed, reactive, watch } from 'vue';
+
+const props = defineProps<{
+    initialSnapshot: ReadingSnapshot;
+}>();
+
+const { snapshot } = useLatestReading(props.initialSnapshot, 8000, '/api/public/readings/latest');
+
+const hasAnyReading = computed(() => Object.values(snapshot.value.readings).some((value) => value !== null));
+const statusHeadline = computed(() => STATUS_HEADLINES[snapshot.value.status] ?? { line1: 'Your home', line2: 'is being monitored.' });
+const statusDescription = computed(() => STATUS_DESCRIPTIONS[snapshot.value.status] ?? '');
+
+// Rolling client-side buffer of real polled values, not fabricated data — the
+// line simply has nothing to draw until the device has sent a couple of
+// readings while this page has been open.
+const MAX_POINTS = 20;
+const series = reactive<Record<keyof SensorReadings, number[]>>({
+    particulate_matter: [],
+    temperature: [],
+    humidity: [],
+    nitrogen: [],
+    co: [],
+});
+
+watch(
+    () => snapshot.value.readings,
+    (readings) => {
+        (Object.keys(series) as (keyof SensorReadings)[]).forEach((key) => {
+            const value = readings[key];
+            if (value === null) return;
+
+            series[key].push(value);
+            if (series[key].length > MAX_POINTS) series[key].shift();
+        });
+    },
+    { immediate: true },
+);
 
 interface Metric {
-    key: string;
+    key: keyof SensorReadings;
     label: string;
     icon: LucideIcon;
-    value: string;
+    value: number | null;
     unit: string;
-    series: number[];
+    decimals: number;
     wide?: boolean;
 }
 
-const metrics: Metric[] = [
-    { key: 'pm25', label: 'PM2.5', icon: Wind, value: '8', unit: 'µg/m³', series: [6, 9, 7, 11, 8, 6, 8] },
-    { key: 'temperature', label: 'Temperature', icon: Thermometer, value: '24.5', unit: '°C', series: [23.8, 24.1, 23.9, 24.6, 24.3, 24.8, 24.5] },
-    { key: 'humidity', label: 'Humidity', icon: Droplets, value: '55', unit: '%', series: [58, 54, 56, 52, 55, 57, 55] },
-    { key: 'co', label: 'CO', icon: Flame, value: '4.5', unit: 'signal', series: [3.8, 4.4, 4.0, 4.9, 4.2, 4.7, 4.5] },
-    { key: 'nitrogen', label: 'Nitrogen', icon: Atom, value: '40.0', unit: 'signal', series: [36, 42, 38, 45, 39, 41, 40], wide: true },
-];
+const metrics = computed<Metric[]>(() => [
+    { key: 'particulate_matter', label: 'PM2.5', icon: Wind, value: snapshot.value.readings.particulate_matter, unit: ' µg/m³', decimals: 1 },
+    { key: 'temperature', label: 'Temperature', icon: Thermometer, value: snapshot.value.readings.temperature, unit: '°C', decimals: 1 },
+    { key: 'humidity', label: 'Humidity', icon: Droplets, value: snapshot.value.readings.humidity, unit: '%', decimals: 1 },
+    { key: 'co', label: 'CO', icon: Flame, value: snapshot.value.readings.co, unit: '', decimals: 2 },
+    { key: 'nitrogen', label: 'Nitrogen', icon: Atom, value: snapshot.value.readings.nitrogen, unit: '', decimals: 1, wide: true },
+]);
 
-const recommendations = [
-    { icon: Leaf, text: 'Keep windows and doors open to allow fresh air circulation.' },
-    { icon: Wind, text: 'Regularly clean and dust the space to minimize allergens.' },
-    { icon: ShieldCheck, text: 'Indoor plants like peace lilies can help maintain this air quality.' },
-];
+function formatValue(metric: Metric): string {
+    return metric.value === null ? '–' : `${metric.value.toFixed(metric.decimals)}${metric.unit}`;
+}
 </script>
 
 <template>
@@ -39,29 +76,32 @@ const recommendations = [
                 <span class="airzen-air-particle airzen-air-particle-3 absolute right-10 top-40 h-1.5 w-1.5 rounded-full bg-white/60"></span>
                 <span class="airzen-air-particle airzen-air-particle-4 absolute right-36 top-16 h-1 w-1 rounded-full bg-white/60"></span>
 
-                <p class="relative flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white/70">
-                    <span class="h-1.5 w-1.5 rounded-full bg-[#C6DF58]"></span>
-                    Air quality now
-                </p>
-                <h3 class="az2-display relative mt-2 text-3xl leading-[1.05] sm:text-4xl">
-                    Your home feels<br />
-                    <span class="text-[#C6DF58]">clear.</span>
-                </h3>
-                <p class="relative mt-3 max-w-[32ch] text-sm text-white/70">A calm reading across the room. Nothing needs your attention right now.</p>
+                <template v-if="hasAnyReading">
+                    <p class="relative flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.1em] text-white/70">
+                        <span class="h-1.5 w-1.5 rounded-full bg-[#C6DF58]"></span>
+                        Air quality now
+                    </p>
+                    <h3 class="az2-display relative mt-2 text-3xl leading-[1.05] sm:text-4xl">
+                        {{ statusHeadline.line1 }}<br />
+                        <span class="text-[#C6DF58]">{{ statusHeadline.line2 }}</span>
+                    </h3>
+                    <p class="relative mt-3 max-w-[32ch] text-sm text-white/70">{{ statusDescription }}</p>
 
-                <div class="relative mt-6 flex flex-wrap items-end justify-between gap-4">
-                    <div class="flex items-baseline gap-2">
-                        <span class="az2-display text-6xl text-[#C6DF58]">34</span>
-                        <span class="pb-1">
-                            <span class="block text-base font-bold">Good</span>
-                            <span class="block text-xs text-white/60">out of 300 &middot; PM2.5-driven</span>
+                    <div class="relative mt-6 flex flex-wrap items-end justify-between gap-4">
+                        <div class="flex items-baseline gap-2">
+                            <span class="az2-display text-6xl text-[#C6DF58]">{{ Math.round(snapshot.aqi) }}</span>
+                            <span class="pb-1">
+                                <span class="block text-base font-bold">{{ snapshot.status }}</span>
+                                <span class="block text-xs text-white/60">out of 300 &middot; PM2.5-driven</span>
+                            </span>
+                        </div>
+                        <span class="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90">
+                            <span class="airzen-live-dot h-1.5 w-1.5 rounded-full bg-[#C6DF58]"></span>
+                            {{ formatUpdatedAt(snapshot.updated_at) }}
                         </span>
                     </div>
-                    <span class="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-bold text-white/90">
-                        <ShieldCheck :size="14" />
-                        No action needed
-                    </span>
-                </div>
+                </template>
+                <p v-else class="relative py-16 text-center text-sm text-white/80">Waiting for the first sensor reading&hellip;</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -78,10 +118,8 @@ const recommendations = [
                             </span>
                             <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-[#6B8577]">{{ metric.label }}</span>
                         </div>
-                        <MiniSparkline :points="metric.series" color="#2A8362" class="w-20" />
-                        <p class="az2-display shrink-0 text-2xl text-[#1D352D]">
-                            {{ metric.value }}<span class="ml-0.5 text-xs font-normal text-[#6B8577]">{{ metric.unit }}</span>
-                        </p>
+                        <MiniSparkline :points="series[metric.key]" color="#2A8362" class="w-20" />
+                        <p class="az2-display shrink-0 text-2xl text-[#1D352D]">{{ formatValue(metric) }}</p>
                     </template>
                     <template v-else>
                         <div class="flex items-center justify-between">
@@ -90,10 +128,8 @@ const recommendations = [
                             </span>
                             <span class="text-[9px] font-bold uppercase tracking-[0.08em] text-[#6B8577]">{{ metric.label }}</span>
                         </div>
-                        <MiniSparkline :points="metric.series" color="#2A8362" />
-                        <p class="az2-display text-2xl text-[#1D352D]">
-                            {{ metric.value }}<span class="ml-0.5 text-xs font-normal text-[#6B8577]">{{ metric.unit }}</span>
-                        </p>
+                        <MiniSparkline :points="series[metric.key]" color="#2A8362" />
+                        <p class="az2-display text-2xl text-[#1D352D]">{{ formatValue(metric) }}</p>
                     </template>
                 </div>
             </div>
@@ -103,11 +139,11 @@ const recommendations = [
             <h4 class="az2-display text-xl text-[#1D352D]">A little care, at the right time.</h4>
             <p class="mt-1 text-sm text-[#6B8577]">Suggestions, never alarms.</p>
             <ul class="mt-4 grid gap-3 sm:grid-cols-3">
-                <li v-for="(item, index) in recommendations" :key="index" class="flex items-start gap-2.5 rounded-[16px] bg-[#F7F8F1] p-3.5">
+                <li v-for="(item, index) in snapshot.recommendations" :key="index" class="flex items-start gap-2.5 rounded-[16px] bg-[#F7F8F1] p-3.5">
                     <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2A8362]/10 text-[#2A8362]">
-                        <component :is="item.icon" :size="14" />
+                        <component :is="RECOMMENDATION_ICONS[index % RECOMMENDATION_ICONS.length]" :size="14" />
                     </span>
-                    <p class="text-xs leading-relaxed text-[#3C4A41]">{{ item.text }}</p>
+                    <p class="text-xs leading-relaxed text-[#3C4A41]">{{ item }}</p>
                 </li>
             </ul>
         </div>
@@ -122,6 +158,10 @@ const recommendations = [
 }
 .az2-sans {
     font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+.airzen-live-dot {
+    animation: airzen-live-pulse 2s ease-in-out infinite;
 }
 
 .airzen-air-ring {
@@ -141,6 +181,16 @@ const recommendations = [
     50% {
         opacity: 1;
         transform: scale(1.06);
+    }
+}
+
+@keyframes airzen-live-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.35;
     }
 }
 

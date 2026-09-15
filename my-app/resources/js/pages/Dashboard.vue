@@ -4,9 +4,10 @@ import WeeklyAqiBars from '@/components/WeeklyAqiBars.vue';
 import { useLatestReading, type ReadingSnapshot } from '@/composables/useLatestReading';
 import { useReadingHistory, type ReadingHistory } from '@/composables/useReadingHistory';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatUpdatedAt, RECOMMENDATION_ICONS, STATUS_DESCRIPTIONS, STATUS_HEADLINES } from '@/lib/airQualityCopy';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/vue3';
-import { Droplets, Flame, Leaf, ShieldCheck, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
+import { Droplets, Flame, Thermometer, Wind, type LucideIcon } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 const props = defineProps<{
@@ -29,40 +30,9 @@ const greeting = computed(() => {
 
 const hasAnyReading = computed(() => Object.values(snapshot.value.readings).some((value) => value !== null));
 
-const STATUS_DESCRIPTIONS: Record<string, string> = {
-    Good: 'Air quality is comfortable and healthy. No immediate action needed.',
-    Normal: 'Air quality is acceptable. Light ventilation is still a good idea.',
-    'Unhealthy for Sensitive Groups': 'Sensitive individuals may notice mild effects. Consider the tips below.',
-    'Unhealthy for All Groups': 'Air quality is degraded for everyone. Follow the recommendations below.',
-    'Very Unhealthy': 'Air quality is poor. Take action to improve ventilation and filtration now.',
-};
-
 const statusDescription = computed(() => STATUS_DESCRIPTIONS[snapshot.value.status] ?? '');
 
-const STATUS_HEADLINES: Record<string, { line1: string; line2: string }> = {
-    Good: { line1: 'Your home feels', line2: 'clear.' },
-    Normal: { line1: 'Your home feels', line2: 'steady.' },
-    'Unhealthy for Sensitive Groups': { line1: 'Your home needs', line2: 'a little care.' },
-    'Unhealthy for All Groups': { line1: 'Your home needs', line2: 'attention.' },
-    'Very Unhealthy': { line1: 'Your home needs', line2: 'action now.' },
-};
-
 const statusHeadline = computed(() => STATUS_HEADLINES[snapshot.value.status] ?? { line1: 'Your home', line2: 'is being monitored.' });
-
-function formatUpdatedAt(iso: string | null): string {
-    if (!iso) return 'No readings yet';
-
-    const seconds = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-    if (seconds < 60) return 'Updated just now';
-
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `Updated ${minutes}m ago`;
-
-    const hours = Math.floor(minutes / 60);
-    return `Updated ${hours}h ago`;
-}
-
-const RECOMMENDATION_ICONS: LucideIcon[] = [Leaf, Wind, ShieldCheck];
 
 interface Metric {
     key: string;
@@ -149,8 +119,8 @@ const indexFillScale = computed(() => Math.min(snapshot.value.aqi, 300) / 300);
                 </div>
             </div>
 
-            <div class="airzen-section grid gap-6 lg:grid-cols-5" style="animation-delay: 60ms">
-                <div class="relative overflow-hidden rounded-[22px] bg-[#2A8362] p-8 text-white lg:col-span-2">
+            <div class="airzen-section grid gap-6 md:grid-cols-2 lg:grid-cols-5" style="animation-delay: 60ms">
+                <div class="relative overflow-hidden rounded-[22px] bg-[#2A8362] p-6 text-white sm:p-8 lg:col-span-2">
                     <div class="airzen-air-ring airzen-air-ring-1 absolute -right-10 -top-10 h-40 w-40 rounded-full border border-white/10"></div>
                     <div class="airzen-air-ring airzen-air-ring-2 absolute -right-2 top-8 h-24 w-24 rounded-full border border-white/10"></div>
                     <span class="airzen-air-particle airzen-air-particle-1 absolute right-16 top-20 h-1.5 w-1.5 rounded-full bg-[#C6DF58]"></span>
@@ -232,7 +202,7 @@ const indexFillScale = computed(() => Math.min(snapshot.value.aqi, 300) / 300);
                             <component :is="metric.icon" :size="17" :stroke-width="2" />
                         </span>
                         <div class="min-w-0 flex-1">
-                            <div class="flex items-center gap-2">
+                            <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                 <span class="text-sm font-medium text-[#1D352D]">{{ metric.label }}</span>
                                 <span
                                     v-if="metric.badge"

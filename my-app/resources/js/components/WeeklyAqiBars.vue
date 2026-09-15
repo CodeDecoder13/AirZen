@@ -45,7 +45,7 @@ function heightScale(aqi: number | null): number {
                     title="No readings recorded this day"
                 ></div>
             </div>
-            <span class="text-xs font-medium" :class="day.is_today ? 'text-airzen-green-dark' : 'text-airzen-muted'">
+            <span class="text-xs font-medium" :class="day.is_today ? 'text-[#2A8362]' : 'text-[#6B8577]'">
                 {{ day.is_today ? 'Today' : day.label }}
             </span>
         </div>

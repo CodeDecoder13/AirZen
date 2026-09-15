@@ -74,7 +74,7 @@ const latestPoint = computed(() => coords.value.at(-1));
             <circle v-if="latestPoint" class="airzen-sparkline-dot" :cx="latestPoint.x" :cy="latestPoint.y" r="3.5" :fill="color" />
             <circle v-if="latestPoint" class="airzen-sparkline-ping" :cx="latestPoint.x" :cy="latestPoint.y" r="3.5" fill="none" :stroke="color" stroke-width="1.5" />
         </svg>
-        <div v-else class="flex h-24 items-center justify-center text-sm text-airzen-muted">Not enough readings yet to chart a trend.</div>
+        <div v-else class="flex h-24 items-center justify-center text-sm text-[#6B8577]">Not enough readings yet to chart a trend.</div>
     </div>
 </template>
 
