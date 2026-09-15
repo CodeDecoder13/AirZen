@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\SensorReading;
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 
+/**
+ * Not resolved via automatic controller injection (that would validate before
+ * IotIngestController can tell a real reading apart from a plain status-page
+ * visit) — IotIngestController builds a Validator from rules() manually and
+ * returns a plain 422 JSON body itself on failure, since the ESP32 doesn't
+ * parse a redirect response.
+ */
 final class StoreIotReadingRequest extends FormRequest
 {
     private const KNOWN_TYPES = [
@@ -20,11 +25,6 @@ final class StoreIotReadingRequest extends FormRequest
         SensorReading::CO2,
         SensorReading::PARTICULATE_MATTER,
     ];
-
-    public function authorize(): bool
-    {
-        return true;
-    }
 
     /**
      * @return array<string, array<int, mixed>>
@@ -37,16 +37,5 @@ final class StoreIotReadingRequest extends FormRequest
             'type1' => ['required', 'string', Rule::in(self::KNOWN_TYPES)],
             'type2' => ['required', 'string', Rule::in(self::KNOWN_TYPES)],
         ];
-    }
-
-    /**
-     * The ESP32 device never sends an Accept: application/json header and does
-     * not parse the response body — it only logs the HTTP status code. Force a
-     * plain 422 here instead of the default 302 redirect-back-on-failure
-     * behavior a non-JSON request would otherwise get.
-     */
-    protected function failedValidation(Validator $validator): void
-    {
-        throw new HttpResponseException(response()->json($validator->errors(), 422));
     }
 }

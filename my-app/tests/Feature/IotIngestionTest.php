@@ -53,4 +53,22 @@ class IotIngestionTest extends TestCase
         $response->assertStatus(422);
         $this->assertDatabaseCount('sensor_readings', 0);
     }
+
+    public function test_a_plain_visit_with_no_params_shows_the_waiting_status_page()
+    {
+        $response = $this->get('/iot.php');
+
+        $response->assertStatus(200);
+        $response->assertSee('Waiting for first reading');
+    }
+
+    public function test_a_plain_visit_with_no_params_shows_connected_once_data_exists()
+    {
+        $this->get('/iot.php?val1=40.0&val2=4.5&type1=NITROGEN&type2=C0');
+
+        $response = $this->get('/iot.php');
+
+        $response->assertStatus(200);
+        $response->assertSee('ESP32 connected');
+    }
 }
