@@ -17,15 +17,6 @@ use Illuminate\Validation\Rule;
  */
 final class StoreIotReadingRequest extends FormRequest
 {
-    private const KNOWN_TYPES = [
-        SensorReading::TEMPERATURE,
-        SensorReading::HUMIDITY,
-        SensorReading::NITROGEN,
-        SensorReading::C0,
-        SensorReading::CO2,
-        SensorReading::PARTICULATE_MATTER,
-    ];
-
     /**
      * @return array<string, array<int, mixed>>
      */
@@ -34,8 +25,8 @@ final class StoreIotReadingRequest extends FormRequest
         return [
             'val1' => ['required', 'numeric'],
             'val2' => ['required', 'numeric'],
-            'type1' => ['required', 'string', Rule::in(self::KNOWN_TYPES)],
-            'type2' => ['required', 'string', Rule::in(self::KNOWN_TYPES)],
+            'type1' => ['required', 'string', Rule::in(SensorReading::TYPES)],
+            'type2' => ['required', 'string', Rule::in(SensorReading::TYPES)],
         ];
     }
 }

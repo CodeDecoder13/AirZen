@@ -61,4 +61,40 @@ class HistoryPageTest extends TestCase
 
         $response->assertInertia(fn ($page) => $page->has('readings.data', 1));
     }
+
+    public function test_playground_defaults_to_particulate_matter_line_chart()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/history');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('playground.metric', 'ParticulateMatter')
+            ->where('playground.chartType', 'line')
+            ->has('playground.daily')
+            ->has('playground.buckets'));
+    }
+
+    public function test_playground_accepts_a_known_metric_and_chart_type()
+    {
+        $user = User::factory()->create();
+        SensorReading::factory()->create(['type' => 'HUMIDITY', 'value' => 55.0]);
+
+        $response = $this->actingAs($user)->get('/history?metric=HUMIDITY&chartType=pie');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('playground.metric', 'HUMIDITY')
+            ->where('playground.chartType', 'pie'));
+    }
+
+    public function test_playground_falls_back_to_defaults_for_unknown_metric_or_chart_type()
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user)->get('/history?metric=BOGUS&chartType=scatter');
+
+        $response->assertInertia(fn ($page) => $page
+            ->where('playground.metric', 'ParticulateMatter')
+            ->where('playground.chartType', 'line'));
+    }
 }

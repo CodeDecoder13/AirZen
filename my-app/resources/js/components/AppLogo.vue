@@ -14,6 +14,6 @@ defineProps<Props>();
     </div>
     <div class="ml-1 grid flex-1 text-left leading-none">
         <span class="truncate text-sm font-semibold">AirZen</span>
-        <span class="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/60">The air, understood</span>
+        <span class="truncate text-[9px] font-bold uppercase tracking-[0.12em] text-sidebar-foreground/60">Your Indoor Companion</span>
     </div>
 </template>

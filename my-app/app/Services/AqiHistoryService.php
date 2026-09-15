@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\SensorReading;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 
@@ -50,9 +52,32 @@ final class AqiHistoryService
      */
     public function dailyAverages(int $days): array
     {
+        return array_map(
+            fn (array $day): array => [
+                'label' => $day['label'],
+                'date' => $day['date'],
+                'average_aqi' => $day['average_value'] !== null
+                    ? $this->aqiCalculator->calculateOverallAqi(['pm25' => $day['average_value']])
+                    : null,
+                'is_today' => $day['is_today'],
+            ],
+            $this->dailyMetricAverages(SensorReading::PARTICULATE_MATTER, $days),
+        );
+    }
+
+    /**
+     * Same $days-days-ending-today shape as dailyAverages(), but the raw
+     * average value for any sensor type instead of an AQI conversion - powers
+     * the History playground, which has no health-band scale for most
+     * sensors. A day with no readings reports a null average.
+     *
+     * @return list<array{label: string, date: string, average_value: ?float, is_today: bool}>
+     */
+    public function dailyMetricAverages(string $type, int $days): array
+    {
         $since = Carbon::now()->startOfDay()->subDays($days - 1);
 
-        $readingsByDate = SensorReading::where('type', SensorReading::PARTICULATE_MATTER)
+        $readingsByDate = SensorReading::where('type', $type)
             ->where('created_at', '>=', $since)
             ->get(['value', 'created_at'])
             ->groupBy(fn (SensorReading $reading): string => $reading->created_at->toDateString());
@@ -66,14 +91,51 @@ final class AqiHistoryService
             $result[] = [
                 'label' => $date->format('D'),
                 'date' => $date->toDateString(),
-                'average_aqi' => $dayReadings && $dayReadings->isNotEmpty()
-                    ? $this->aqiCalculator->calculateOverallAqi(['pm25' => $dayReadings->avg('value')])
+                'average_value' => $dayReadings && $dayReadings->isNotEmpty()
+                    ? round($dayReadings->avg('value'), 2)
                     : null,
                 'is_today' => $date->isToday(),
             ];
         }
 
         return $result;
+    }
+
+    /**
+     * Splits a set of daily averages into three roughly-even Low/Mid/High
+     * buckets by their own observed min-max range - not a health-band scale
+     * (most sensors don't have one), just a relative-occurrence lens for the
+     * playground's pie view.
+     *
+     * @param list<array{average_value: ?float}> $dailyAverages
+     * @return array<string, int>
+     */
+    public function valueBuckets(array $dailyAverages): array
+    {
+        $values = array_values(array_filter(
+            array_column($dailyAverages, 'average_value'),
+            fn (?float $value): bool => $value !== null,
+        ));
+
+        if ($values === []) {
+            return [];
+        }
+
+        $min = min($values);
+        $range = max(max($values) - $min, 0.0001);
+        $counts = ['Low' => 0, 'Mid' => 0, 'High' => 0];
+
+        foreach ($values as $value) {
+            $ratio = ($value - $min) / $range;
+            $bucket = match (true) {
+                $ratio < 1 / 3 => 'Low',
+                $ratio < 2 / 3 => 'Mid',
+                default => 'High',
+            };
+            $counts[$bucket]++;
+        }
+
+        return $counts;
     }
 
     /**
@@ -103,6 +165,26 @@ final class AqiHistoryService
      */
     public function paginatedReadings(array $filters, int $perPage = 20): LengthAwarePaginator
     {
+        return $this->filteredQuery($filters)->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * Same filters as paginatedReadings(), unpaginated, for CSV/PDF export.
+     * Capped so a runaway date range can't exhaust memory generating a file.
+     *
+     * @param array{type?: ?string, from?: ?string, to?: ?string} $filters
+     * @return Collection<int, SensorReading>
+     */
+    public function exportableReadings(array $filters, int $limit = 10000): Collection
+    {
+        return $this->filteredQuery($filters)->limit($limit)->get();
+    }
+
+    /**
+     * @param array{type?: ?string, from?: ?string, to?: ?string} $filters
+     */
+    private function filteredQuery(array $filters): Builder
+    {
         $query = SensorReading::query()->latest();
 
         if (! empty($filters['type'])) {
@@ -117,6 +199,6 @@ final class AqiHistoryService
             $query->where('created_at', '<=', Carbon::parse($filters['to'])->endOfDay());
         }
 
-        return $query->paginate($perPage)->withQueryString();
+        return $query;
     }
 }

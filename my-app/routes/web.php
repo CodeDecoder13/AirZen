@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\SensorReadingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DigestRecipientController;
 use App\Http\Controllers\HistoryController;
+use App\Http\Controllers\HistoryExportController;
 use App\Http\Controllers\IotIngestController;
 use App\Services\LatestReadingSnapshot;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('notifications/{digestRecipient}', [DigestRecipientController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('history', [HistoryController::class, 'index'])->name('history.index');
+    Route::get('history/export/csv', [HistoryExportController::class, 'csv'])->name('history.export.csv');
+    Route::get('history/export/pdf', [HistoryExportController::class, 'pdf'])->name('history.export.pdf');
 });
 
 Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {

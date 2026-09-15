@@ -22,6 +22,16 @@ final class SensorReading extends Model
     public const CO2 = 'CO2';
     public const PARTICULATE_MATTER = 'ParticulateMatter';
 
+    /** @var list<string> */
+    public const TYPES = [
+        self::TEMPERATURE,
+        self::HUMIDITY,
+        self::NITROGEN,
+        self::C0,
+        self::CO2,
+        self::PARTICULATE_MATTER,
+    ];
+
     protected $fillable = [
         'type',
         'value',
