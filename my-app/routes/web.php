@@ -31,7 +31,9 @@ Route::middleware(['auth', 'verified'])->prefix('api')->group(function () {
 
 // Literal path and query param names are hardcoded into the already-flashed
 // ESP32 firmware — do not rename this route or its val1/val2/type1/type2 params.
-Route::get('/iot.php', [IotIngestController::class, 'store'])->name('iot.ingest');
+Route::get('/iot.php', [IotIngestController::class, 'store'])
+    ->middleware('throttle:120,1')
+    ->name('iot.ingest');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

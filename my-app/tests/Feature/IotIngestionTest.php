@@ -45,4 +45,12 @@ class IotIngestionTest extends TestCase
 
         $response->assertStatus(422);
     }
+
+    public function test_rejects_a_request_with_an_unknown_sensor_type()
+    {
+        $response = $this->get('/iot.php?val1=1&val2=2&type1=BOGUS&type2=HUMIDITY');
+
+        $response->assertStatus(422);
+        $this->assertDatabaseCount('sensor_readings', 0);
+    }
 }
