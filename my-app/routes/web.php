@@ -23,6 +23,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications', [DigestRecipientController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [DigestRecipientController::class, 'store'])->name('notifications.store');
+    Route::post('notifications/send', [DigestRecipientController::class, 'send'])->middleware('throttle:5,1')->name('notifications.send');
     Route::delete('notifications/{digestRecipient}', [DigestRecipientController::class, 'destroy'])->name('notifications.destroy');
 
     Route::get('history', [HistoryController::class, 'index'])->name('history.index');

@@ -2,7 +2,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
-import { Mail, Trash2 } from 'lucide-vue-next';
+import { Mail, Send, Trash2 } from 'lucide-vue-next';
 
 interface Recipient {
     id: number;
@@ -11,11 +11,17 @@ interface Recipient {
 
 defineProps<{
     recipients: Recipient[];
+    status?: string | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Notifications', href: '/notifications' }];
 
 const form = useForm({ email: '' });
+const sendForm = useForm({});
+
+function sendNow() {
+    sendForm.post(route('notifications.send'), { preserveScroll: true });
+}
 
 function submit() {
     form.post(route('notifications.store'), {
@@ -34,9 +40,24 @@ function remove(id: number) {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="az2-sans flex h-full flex-1 flex-col gap-6 bg-[#F7F8F1] p-4 md:p-6">
-            <div>
-                <h1 class="az2-display text-2xl text-[#1D352D]">Notifications</h1>
-                <p class="text-sm text-[#6B8577]">Everyone in this table gets the 7:00 AM morning air quality digest.</p>
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <h1 class="az2-display text-2xl text-[#1D352D]">Notifications</h1>
+                    <p class="text-sm text-[#6B8577]">Everyone in this table gets the 7:00 AM morning air quality digest.</p>
+                </div>
+                <div class="flex flex-col items-end gap-1">
+                    <button
+                        type="button"
+                        :disabled="sendForm.processing || recipients.length === 0"
+                        class="flex items-center gap-1.5 rounded-full bg-[#1A3C30] px-5 py-2 text-sm font-bold text-[#C6DF58] hover:bg-[#12291f] disabled:opacity-60"
+                        @click="sendNow"
+                    >
+                        <Send :size="15" />
+                        {{ sendForm.processing ? 'Sending…' : 'Send air quality email now' }}
+                    </button>
+                    <p v-if="sendForm.errors.send" class="text-xs text-red-600">{{ sendForm.errors.send }}</p>
+                    <p v-else-if="status" class="text-xs text-[#2A8362]">{{ status }}</p>
+                </div>
             </div>
 
             <div class="rounded-[28px] bg-white p-6 shadow-[0_1px_2px_rgba(20,35,25,0.04),0_24px_48px_-24px_rgba(20,35,25,0.25)]">

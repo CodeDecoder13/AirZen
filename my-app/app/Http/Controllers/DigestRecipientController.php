@@ -5,8 +5,11 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreDigestRecipientRequest;
+use App\Mail\MorningAirQualityDigest;
 use App\Models\DigestRecipient;
+use App\Services\MorningDigestService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,7 +19,29 @@ final class DigestRecipientController extends Controller
     {
         return Inertia::render('Notifications', [
             'recipients' => DigestRecipient::orderBy('email')->get(['id', 'email']),
+            'status' => session('status'),
         ]);
+    }
+
+    public function send(MorningDigestService $digestService): RedirectResponse
+    {
+        $recipients = DigestRecipient::all();
+
+        if ($recipients->isEmpty()) {
+            return back()->withErrors(['send' => 'Add a recipient first.']);
+        }
+
+        $digest = $digestService->build();
+
+        if ($digest === null) {
+            return back()->withErrors(['send' => 'No sensor readings recorded today yet - nothing to send.']);
+        }
+
+        foreach ($recipients as $recipient) {
+            Mail::to($recipient->email)->send(new MorningAirQualityDigest($digest));
+        }
+
+        return back()->with('status', "Air quality email sent to {$recipients->count()} recipient(s).");
     }
 
     public function store(StoreDigestRecipientRequest $request): RedirectResponse

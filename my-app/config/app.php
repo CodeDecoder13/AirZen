@@ -67,6 +67,10 @@ return [
 
     'timezone' => 'UTC',
 
+    // Only used to pick "morning/afternoon/night" wording in digest emails;
+    // stored timestamps stay UTC.
+    'digest_timezone' => env('DIGEST_TIMEZONE', 'Asia/Manila'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Locale Configuration

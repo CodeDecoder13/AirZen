@@ -28,9 +28,9 @@ final class MorningDigestService
      *     recommendations: list<string>,
      * }|null
      */
-    public function build(): ?array
+    public function build(?Carbon $since = null): ?array
     {
-        $since = Carbon::today();
+        $since ??= Carbon::today();
 
         $readings = [
             'temperature' => $this->averageSince(SensorReading::TEMPERATURE, $since),
