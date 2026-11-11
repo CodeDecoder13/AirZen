@@ -8,4 +8,9 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('digest:send-morning')->dailyAt('07:00');
+// Cadence is user-configurable on the Notifications page (DigestSchedule);
+// the scheduler ticks every minute and only fires when the schedule is due.
+Schedule::command('digest:send-morning')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->when(fn () => App\Models\DigestSchedule::current()->isDue());

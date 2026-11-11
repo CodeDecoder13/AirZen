@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\SensorReadingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DigestRecipientController;
+use App\Http\Controllers\DigestScheduleController;
 use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\HistoryExportController;
 use App\Http\Controllers\IotIngestController;
@@ -23,6 +24,7 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('notifications', [DigestRecipientController::class, 'index'])->name('notifications.index');
     Route::post('notifications', [DigestRecipientController::class, 'store'])->name('notifications.store');
+    Route::put('notifications/schedule', [DigestScheduleController::class, 'update'])->name('notifications.schedule');
     Route::post('notifications/send', [DigestRecipientController::class, 'send'])->middleware('throttle:5,1')->name('notifications.send');
     Route::delete('notifications/{digestRecipient}', [DigestRecipientController::class, 'destroy'])->name('notifications.destroy');
 

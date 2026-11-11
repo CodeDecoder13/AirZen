@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDigestRecipientRequest;
 use App\Mail\MorningAirQualityDigest;
 use App\Models\DigestRecipient;
+use App\Models\DigestSchedule;
 use App\Services\MorningDigestService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Mail;
@@ -20,6 +21,20 @@ final class DigestRecipientController extends Controller
         return Inertia::render('Notifications', [
             'recipients' => DigestRecipient::orderBy('email')->get(['id', 'email']),
             'status' => session('status'),
+            'schedule' => (function () {
+                $schedule = DigestSchedule::current();
+
+                return [
+                    'enabled' => $schedule->enabled,
+                    'mode' => $schedule->mode,
+                    'interval_minutes' => $schedule->interval_minutes,
+                    'send_at' => $schedule->send_at,
+                    'last_sent_at' => $schedule->last_sent_at?->toIso8601String(),
+                    'next_run_at' => $schedule->nextRunAt()?->toIso8601String(),
+                    'timezone' => config('app.digest_timezone'),
+                    'min_interval' => DigestSchedule::MIN_INTERVAL_MINUTES,
+                ];
+            })(),
         ]);
     }
 

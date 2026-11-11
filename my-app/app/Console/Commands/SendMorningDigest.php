@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Mail\MorningAirQualityDigest;
 use App\Models\DigestRecipient;
+use App\Models\DigestSchedule;
 use App\Services\MorningDigestService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -43,6 +44,8 @@ final class SendMorningDigest extends Command
         foreach ($recipients as $recipient) {
             Mail::to($recipient->email)->send(new MorningAirQualityDigest($digest));
         }
+
+        DigestSchedule::current()->update(['last_sent_at' => now()]);
 
         $this->info("Sent the morning digest to {$recipients->count()} recipient(s).");
 
